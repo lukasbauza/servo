@@ -14,7 +14,6 @@ use js::jsval::UndefinedValue;
 use js::realm::AutoRealm;
 use js::rust::{CustomAutoRooterGuard, HandleObject};
 use js::typedarray::{ArrayBuffer, ArrayBufferU8, ArrayBufferView};
-use net_traits::blob_url_store::UrlWithBlobClaim;
 use net_traits::request::{
     CacheMode, CredentialsMode, RedirectMode, Referrer, RequestBuilder, RequestMode,
     ServiceWorkersMode,
@@ -51,6 +50,7 @@ use crate::dom::window::Window;
 use crate::fetch::fetch::RequestWithGlobalScope;
 use crate::tasks::task::TaskOnce;
 use crate::tasks::task_source::SendableTaskSource;
+use crate::url::ensure_blob_referenced_by_url_is_kept_alive;
 
 #[derive(Clone, Copy, Debug, JSTraceable, MallocSizeOf, PartialEq)]
 enum WebSocketRequestState {
@@ -284,7 +284,7 @@ impl WebSocketMethods<crate::DomTypeHolder> for WebSocket {
         // "include", cache mode is "no-store" , and redirect mode is "error"
         let request = RequestBuilder::new(
             global.webview_id(),
-            UrlWithBlobClaim::from_url_without_having_claimed_blob(url_record.clone()),
+            ensure_blob_referenced_by_url_is_kept_alive(global, url_record.clone()),
             Referrer::NoReferrer,
         )
         .with_global_scope(global)
